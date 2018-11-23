@@ -1,16 +1,16 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
 
 """Doc gen module"""
 
-import logging
-import click
-import pprint
+
 import json
+import logging
 
 from typing import Dict
 from pathlib import Path
+
+import click
+
 
 __version__ = '0.1.0'
 
@@ -18,7 +18,7 @@ __version__ = '0.1.0'
 LOG = logging.getLogger('docgen')
 
 
-output_path = Path('.')
+OUTPUT_PATH = Path('.')
 
 
 @click.group()
@@ -40,15 +40,17 @@ def docgen(debug):
 @click.option('--path', '-p', prompt=True)
 @click.option('--summary', '-s', prompt=True)
 @click.option('--responses', '-r', multiple=True)
-def route(name: str, verb: str, tags: str, path: str, summary: str, responses) -> None:
+def route(name: str, verb: str, tags: str, path: str, summary: str, responses) -> None: #pylint: disable=too-many-arguments
+    """Creates the documentation for a route"""
     route_path = generate_route(name, verb, tags, path, summary, responses)
-    paths_path = generate_path(name, path, route_path)
+    generate_path(name, path, route_path)
 
 
 def generate_path(name: str, path: str, route_path: Path) -> Path:
-    paths = { 'paths': { } } #default structure
+    """Generates json doc for paths"""
+    paths: Dict[str, Dict] = {'paths': {}}
     filename = f'{name}-paths.json'
-    file_path = output_path / filename
+    file_path = OUTPUT_PATH / filename
     if file_path.exists():
         paths = load_json(file_path)
 
@@ -57,10 +59,16 @@ def generate_path(name: str, path: str, route_path: Path) -> Path:
     return file_path
 
 
-def generate_route(name: str, verb: str, tags: str, path: str, summary: str, responses) -> Path:
-    config = {}
+def generate_route(name: str,  #pylint: disable=too-many-arguments
+                   verb: str,
+                   tags: str,
+                   path: str,
+                   summary: str,
+                   responses) -> Path:
+    """Generates json soc for route"""
+    config: Dict[str, Dict] = {}
     filename = f'{name}.json'
-    file_path = output_path / filename
+    file_path = OUTPUT_PATH / filename
     if file_path.exists():
         config = load_json(file_path)
 
@@ -74,10 +82,12 @@ def generate_route(name: str, verb: str, tags: str, path: str, summary: str, res
 
 
 def path_block(file_path):
-    return  { '$ref': str(file_path) } #not correct file name
+    """Gets a path block"""
+    return  {'$ref': str(file_path)} #not correct file name
 
 
 def verb_block(tags: str, path: str, summary: str) -> Dict:
+    """Gets a verb block"""
     return {
         'tags': [
             tags
@@ -90,28 +100,28 @@ def verb_block(tags: str, path: str, summary: str) -> Dict:
                 '$ref': 'SET SCHEMA REF FOR THE PARAMETER OR DELETE'
             }
         ],
-        'responses': { }
+        'responses': {}
     }
 
 
 def response_block() -> Dict:
     """Generates a reponse block"""
     return {
-            'description': 'SET DESCRIPTION FOR THIS REPONSE',
-            'content': {
-                'application/json': {
-                    'schema': {
-                        '$ref': 'SET SCHEMA REF FOR THE RESPONSE OR DELETE'
-                    }
+        'description': 'SET DESCRIPTION FOR THIS REPONSE',
+        'content': {
+            'application/json': {
+                'schema': {
+                    '$ref': 'SET SCHEMA REF FOR THE RESPONSE OR DELETE'
                 }
             }
         }
+    }
 
 
 def load_json(filepath: Path) -> Dict:
     """Loads a json object from file"""
     with open(str(filepath), 'r') as file:
-            return json.load(file)
+        return json.load(file)
 
 
 def save_json(filepath: Path, payload: Dict) -> None:
